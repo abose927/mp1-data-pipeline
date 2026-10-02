@@ -28,12 +28,27 @@ def setup_logging(verbose=False):
 
 def parse_arguments():
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description= "")
+    parser = argparse.ArgumentParser(description= "data pipeline")
+    parser.add_argument("--input", "-i", type=Path, required=True, help="Path to input file")
+    parser.add_argument("--output", "-o", type=Path, required=True, help="Path to output file")
+    
+
 
 
 def validate_input(filepath):
     """Check whether the input path exists and is a file."""
-    pass  # TODO: implement
+    file_path = Path(filepath)
+    if not file_path.exists():
+        logger.error(f"File does not exist: {file_path}")
+        return False
+    else:
+        logger.info(f"File found: {file_path.name}")
+        if file_path.is_file():
+            logger.info(f"Input file validated: {file_path.name} ")
+            return True
+        else:
+            logger.error(f"Input file not found {file_path.name}")
+            return False
 
 
 def main():
