@@ -11,7 +11,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-
+from data_loaders import load_data
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,11 @@ def main():
     setup_logging(args.verbose)
     logger.debug(f"Arguments parsed: input={args.input}, output={args.output}, format={args.format}")
     if validate_input(args.input) == False:
+        sys.exit(1)
+
+    try:
+        data = load_data(args.input)
+    except ValueError:
         sys.exit(1)
 
 
