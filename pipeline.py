@@ -11,15 +11,19 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from data_loaders import load_data
-from data_processor import process_data, create_cleaning_report
+from src import (
+create_cleaning_report,
+load_data,
+process_data,
+save_data,
+setup_logging,
+validate_dataframe,
+validate_input,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def setup_logging(verbose=False):
-    """Configure logging for the pipeline."""
-    logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO, format="%(asctime)s %(levelname)-8s %(name)s — %(message)s", datefmt="%H:%M:%S")
 
 
 
@@ -36,15 +40,7 @@ def parse_arguments():
 
 
 
-def validate_input(filepath):
-    """Check whether the input path exists and is a file."""
-    file_path = Path(filepath)
-    if file_path.is_file():
-        logger.info(f"Input file validated: {file_path}")
-        return True
-    else:
-        logger.error(f"Input file not found: {file_path}")
-        return False
+
 
 def main():
     """Main pipeline function."""
@@ -60,16 +56,23 @@ def main():
         config = load_data(args.config)
     except ValueError:
         sys.exit(1)
-    original_df = data.copy()
+    required_columns = config["validation"]["required_columns"]
+    numeric_columns = config["validation"]["numeric_columns"]
     try:
-        cleaned_df = process_data(data, config)
+        validated_df = validate_dataframe(data, required_columns, numeric_columns)
+    except ValueError:
+        sys.exit(1)
+    original_df = validated_df.copy()
+    logger.info(f"Validation successful: {len(data)} -> {len(validated_df)} rows")
+    try:
+        cleaned_df = process_data(validated_df, config)
     except ValueError:
         sys.exit(1)
     report = create_cleaning_report(original_df,cleaned_df)
-    print(report)
     logger.info(f"Processing complete: {report['rows_before']} → {report['rows_after']} rows")
-    cleaned_df.to_csv(args.output, index= False)
+    save_data(cleaned_df, args.output)
     logger.info(f"Saved cleaned data to {args.output}")
+    print(report)
 
 
 
